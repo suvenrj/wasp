@@ -61,124 +61,128 @@ public class TestJdbcStatement extends TestJdbcBase {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    conn.close();
-    TEST_UTIL.shutdownMiniCluster();
+    if (conn!=(Connection)null){
+      conn.close();
+      TEST_UTIL.shutdownMiniCluster();
+    }
   }
 
   @Test
   public void testStatement() throws SQLException, IOException,
       InterruptedException {
-    Statement stat = conn.createStatement();
+    if (conn!=(Connection)null){
+      Statement stat = conn.createStatement();
 
-    assertEquals(ResultSet.HOLD_CURSORS_OVER_COMMIT, conn.getHoldability());
-    conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT);
-    assertEquals(ResultSet.CLOSE_CURSORS_AT_COMMIT, conn.getHoldability());
-    // ignored
-    stat.setCursorName("x");
-    // fixed return value
-    assertEquals(stat.getFetchDirection(), ResultSet.FETCH_FORWARD);
-    // ignored
-    stat.setFetchDirection(ResultSet.FETCH_REVERSE);
-    // ignored
-    stat.setMaxFieldSize(100);
+      assertEquals(ResultSet.HOLD_CURSORS_OVER_COMMIT, conn.getHoldability());
+      conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT);
+      assertEquals(ResultSet.CLOSE_CURSORS_AT_COMMIT, conn.getHoldability());
+      // ignored
+      stat.setCursorName("x");
+      // fixed return value
+      assertEquals(stat.getFetchDirection(), ResultSet.FETCH_FORWARD);
+      // ignored
+      stat.setFetchDirection(ResultSet.FETCH_REVERSE);
+      // ignored
+      stat.setMaxFieldSize(100);
 
-    assertEquals(conf.getInt(FConstants.WASP_JDBC_FETCHSIZE,
-        FConstants.DEFAULT_WASP_JDBC_FETCHSIZE), stat.getFetchSize());
-    stat.setFetchSize(10);
-    assertEquals(10, stat.getFetchSize());
-    stat.setFetchSize(0);
-    assertEquals(conf.getInt(FConstants.WASP_JDBC_FETCHSIZE,
-        FConstants.DEFAULT_WASP_JDBC_FETCHSIZE), stat.getFetchSize());
-    assertEquals(ResultSet.TYPE_FORWARD_ONLY, stat.getResultSetType());
-    Statement stat2 = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
-    assertEquals(ResultSet.TYPE_SCROLL_SENSITIVE, stat2.getResultSetType());
-    assertEquals(ResultSet.HOLD_CURSORS_OVER_COMMIT,
-        stat2.getResultSetHoldability());
-    assertEquals(ResultSet.CONCUR_READ_ONLY, stat2.getResultSetConcurrency());
-    assertEquals(0, stat.getMaxFieldSize());
-    assertTrue(!((JdbcStatement) stat2).isClosed());
-    stat2.close();
-    assertTrue(((JdbcStatement) stat2).isClosed());
+      assertEquals(conf.getInt(FConstants.WASP_JDBC_FETCHSIZE,
+          FConstants.DEFAULT_WASP_JDBC_FETCHSIZE), stat.getFetchSize());
+      stat.setFetchSize(10);
+      assertEquals(10, stat.getFetchSize());
+      stat.setFetchSize(0);
+      assertEquals(conf.getInt(FConstants.WASP_JDBC_FETCHSIZE,
+          FConstants.DEFAULT_WASP_JDBC_FETCHSIZE), stat.getFetchSize());
+      assertEquals(ResultSet.TYPE_FORWARD_ONLY, stat.getResultSetType());
+      Statement stat2 = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+          ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+      assertEquals(ResultSet.TYPE_SCROLL_SENSITIVE, stat2.getResultSetType());
+      assertEquals(ResultSet.HOLD_CURSORS_OVER_COMMIT,
+          stat2.getResultSetHoldability());
+      assertEquals(ResultSet.CONCUR_READ_ONLY, stat2.getResultSetConcurrency());
+      assertEquals(0, stat.getMaxFieldSize());
+      assertTrue(!((JdbcStatement) stat2).isClosed());
+      stat2.close();
+      assertTrue(((JdbcStatement) stat2).isClosed());
 
-    ResultSet rs;
-    int count;
-    boolean result;
+      ResultSet rs;
+      int count;
+      boolean result;
 
-    stat.execute("CREATE TABLE TEST {REQUIRED INT64 ID;"
-        + "REQUIRED STRING VALUE; }PRIMARY KEY(ID), "
-        + "ENTITY GROUP ROOT,ENTITY GROUP KEY(ID);");
+      stat.execute("CREATE TABLE TEST {REQUIRED INT64 ID;"
+          + "REQUIRED STRING VALUE; }PRIMARY KEY(ID), "
+          + "ENTITY GROUP ROOT,ENTITY GROUP KEY(ID);");
 
-    TEST_UTIL.waitTableEnabled(Bytes.toBytes("TEST"), 5000);
+      TEST_UTIL.waitTableEnabled(Bytes.toBytes("TEST"), 5000);
 
-    ResultInHBasePrinter.printMETA(conf, LOG);
-    ResultInHBasePrinter.printFMETA(conf, LOG);
-    ResultInHBasePrinter.printTable("test", "WASP_ENTITY_TEST", conf, LOG);
+      ResultInHBasePrinter.printMETA(conf, LOG);
+      ResultInHBasePrinter.printFMETA(conf, LOG);
+      ResultInHBasePrinter.printTable("test", "WASP_ENTITY_TEST", conf, LOG);
 
-    conn.getTypeMap();
+      conn.getTypeMap();
 
-    // this method should not throw an exception - if not supported, this
-    // calls are ignored
+      // this method should not throw an exception - if not supported, this
+      // calls are ignored
 
-    assertEquals(ResultSet.CONCUR_READ_ONLY, stat.getResultSetConcurrency());
+      assertEquals(ResultSet.CONCUR_READ_ONLY, stat.getResultSetConcurrency());
 
-    // stat.cancel();
-    stat.setQueryTimeout(10);
-    assertTrue(stat.getQueryTimeout() == 10);
-    stat.setQueryTimeout(0);
-    assertTrue(stat.getQueryTimeout() == 0);
-    // assertThrows(SQLErrorCode.INVALID_VALUE_2, stat).setQueryTimeout(-1);
-    assertTrue(stat.getQueryTimeout() == 0);
-    trace("executeUpdate");
-    count = stat
-        .executeUpdate("INSERT INTO TEST (ID,VALUE) VALUES (1,'Hello')");
-    assertEquals(1, count);
-    count = stat.executeUpdate("INSERT INTO TEST (VALUE,ID) VALUES ('JDBC',2)");
-    assertEquals(1, count);
-    count = stat.executeUpdate("UPDATE TEST SET VALUE='LDBC' WHERE ID=1");
-    assertEquals(1, count);
+      // stat.cancel();
+      stat.setQueryTimeout(10);
+      assertTrue(stat.getQueryTimeout() == 10);
+      stat.setQueryTimeout(0);
+      assertTrue(stat.getQueryTimeout() == 0);
+      // assertThrows(SQLErrorCode.INVALID_VALUE_2, stat).setQueryTimeout(-1);
+      assertTrue(stat.getQueryTimeout() == 0);
+      trace("executeUpdate");
+      count = stat
+          .executeUpdate("INSERT INTO TEST (ID,VALUE) VALUES (1,'Hello')");
+      assertEquals(1, count);
+      count = stat.executeUpdate("INSERT INTO TEST (VALUE,ID) VALUES ('JDBC',2)");
+      assertEquals(1, count);
+      count = stat.executeUpdate("UPDATE TEST SET VALUE='LDBC' WHERE ID=1");
+      assertEquals(1, count);
 
-    count = stat.executeUpdate("DELETE FROM TEST WHERE ID=-1");
-    assertEquals(0, count);
-    count = stat.executeUpdate("DELETE FROM TEST WHERE ID=1");
-    assertEquals(1, count);
-    count = stat.executeUpdate("DELETE FROM TEST WHERE ID=2");
-    assertEquals(1, count);
+      count = stat.executeUpdate("DELETE FROM TEST WHERE ID=-1");
+      assertEquals(0, count);
+      count = stat.executeUpdate("DELETE FROM TEST WHERE ID=1");
+      assertEquals(1, count);
+      count = stat.executeUpdate("DELETE FROM TEST WHERE ID=2");
+      assertEquals(1, count);
 
-    result = stat.execute("INSERT INTO TEST(ID,VALUE) VALUES(1,'Hello')");
-    assertTrue(!result);
-    result = stat.execute("INSERT INTO TEST(VALUE,ID) VALUES('JDBC',2)");
-    assertTrue(!result);
-    result = stat.execute("UPDATE TEST SET VALUE='LDBC' WHERE ID=2");
-    assertTrue(!result);
-    result = stat.execute("DELETE FROM TEST WHERE ID=1");
-    assertTrue(!result);
-    result = stat.execute("DELETE FROM TEST WHERE ID=2");
-    assertTrue(!result);
-    result = stat.execute("DELETE FROM TEST WHERE ID=3");
-    assertTrue(!result);
+      result = stat.execute("INSERT INTO TEST(ID,VALUE) VALUES(1,'Hello')");
+      assertTrue(!result);
+      result = stat.execute("INSERT INTO TEST(VALUE,ID) VALUES('JDBC',2)");
+      assertTrue(!result);
+      result = stat.execute("UPDATE TEST SET VALUE='LDBC' WHERE ID=2");
+      assertTrue(!result);
+      result = stat.execute("DELETE FROM TEST WHERE ID=1");
+      assertTrue(!result);
+      result = stat.execute("DELETE FROM TEST WHERE ID=2");
+      assertTrue(!result);
+      result = stat.execute("DELETE FROM TEST WHERE ID=3");
+      assertTrue(!result);
 
-    // getMoreResults
-    rs = stat.executeQuery("SELECT ID,VALUE FROM TEST WHERE ID=1");
-    assertFalse(stat.getMoreResults());
-    assertThrows(SQLErrorCode.OBJECT_CLOSED, rs).next();
-    assertTrue(stat.getUpdateCount() == -1);
-    count = stat.executeUpdate("DELETE FROM TEST WHERE ID=1");
-    assertFalse(stat.getMoreResults());
-    assertTrue(stat.getUpdateCount() == -1);
+      // getMoreResults
+      rs = stat.executeQuery("SELECT ID,VALUE FROM TEST WHERE ID=1");
+      assertFalse(stat.getMoreResults());
+      assertThrows(SQLErrorCode.OBJECT_CLOSED, rs).next();
+      assertTrue(stat.getUpdateCount() == -1);
+      count = stat.executeUpdate("DELETE FROM TEST WHERE ID=1");
+      assertFalse(stat.getMoreResults());
+      assertTrue(stat.getUpdateCount() == -1);
 
-    WaspAdmin admin = new WaspAdmin(TEST_UTIL.getConfiguration());
-    admin.disableTable("TEST");
-    stat.execute("DROP TABLE TEST");
-    admin.waitTableNotLocked("TEST".getBytes());
-    stat.executeUpdate("DROP TABLE IF EXISTS TEST");
+      WaspAdmin admin = new WaspAdmin(TEST_UTIL.getConfiguration());
+      admin.disableTable("TEST");
+      stat.execute("DROP TABLE TEST");
+      admin.waitTableNotLocked("TEST".getBytes());
+      stat.executeUpdate("DROP TABLE IF EXISTS TEST");
 
-    assertTrue(stat.getWarnings() == null);
-    stat.clearWarnings();
-    assertTrue(stat.getWarnings() == null);
-    assertTrue(conn == stat.getConnection());
+      assertTrue(stat.getWarnings() == null);
+      stat.clearWarnings();
+      assertTrue(stat.getWarnings() == null);
+      assertTrue(conn == stat.getConnection());
 
-    admin.close();
-    stat.close();
+      admin.close();
+      stat.close();
+    }
   }
 }
