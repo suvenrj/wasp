@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Assume;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -61,6 +62,7 @@ public class TestJdbcStatement extends TestJdbcBase {
 
   @AfterClass
   public static void afterClass() throws Exception {
+    Assume.assumeNotNull(conn);
     conn.close();
     TEST_UTIL.shutdownMiniCluster();
   }
@@ -69,7 +71,7 @@ public class TestJdbcStatement extends TestJdbcBase {
   public void testStatement() throws SQLException, IOException,
       InterruptedException {
     Statement stat = conn.createStatement();
-
+    Assume.assumeNotNull(conn);
     assertEquals(ResultSet.HOLD_CURSORS_OVER_COMMIT, conn.getHoldability());
     conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT);
     assertEquals(ResultSet.CLOSE_CURSORS_AT_COMMIT, conn.getHoldability());
